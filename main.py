@@ -4,7 +4,6 @@ from pydantic import BaseModel
 from groq import Groq
 import os
 from dotenv import load_dotenv
-import tiktoken
 
 # Load API Key
 load_dotenv()
@@ -33,9 +32,9 @@ class TagTransformRequest(BaseModel):
     selected_text: str
     timestamp: str  # e.g. [03:43]
 
+# New: simple estimate function without tiktoken
 def estimate_tokens(text: str) -> int:
-    enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
-    return len(enc.encode(text))
+    return len(text) // 4  # Rough approximation: 1 token ≈ 4 characters
 
 def chunk_text(text: str, chunk_size: int = 6000) -> list:
     words = text.split()
@@ -85,14 +84,13 @@ async def transform_notes(req: TransformRequest):
 @app.post("/tag-transform")
 async def tag_and_transform(req: TagTransformRequest):
     dynamic_prompt = (
-    f"You are assisting with documenting key insights from a requirement gathering call. "
-    f"The user has selected the following excerpt from the transcript and tagged it as <{req.category}>. "
-    f"Your task is to extract the key point(s) conveyed in this selection and rewrite them in a clear, professional, third-person format — as if they are bullet points in structured meeting notes. "
-    f"Do not use dialogue or speaker names. Summarize only the essential information, and attach the starting and ending timestamps the timestamp {req.timestamp}. "
-    f"Keep the output concise and relevant to the <{req.category}> tag.\n\n"
-    f"Transcript Excerpt:\n{req.selected_text}"
+        f"You are assisting with documenting key insights from a requirement gathering call. "
+        f"The user has selected the following excerpt from the transcript and tagged it as <{req.category}>. "
+        f"Your task is to extract the key point(s) conveyed in this selection and rewrite them in a clear, professional, third-person format — as if they are bullet points in structured meeting notes. "
+        f"Do not use dialogue or speaker names. Summarize only the essential information, and attach the starting and ending timestamps the timestamp {req.timestamp}. "
+        f"Keep the output concise and relevant to the <{req.category}> tag.\n\n"
+        f"Transcript Excerpt:\n{req.selected_text}"
     )
-
 
     completion = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
