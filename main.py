@@ -1,3 +1,4 @@
+# ---------main.py---------
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -28,7 +29,6 @@ class TransformRequest(BaseModel):
     notes: str
 
 class TagTransformRequest(BaseModel):
-    category: str
     selected_text: str
     timestamp: str  # e.g. [03:43]
 
@@ -83,16 +83,7 @@ async def transform_notes(req: TransformRequest):
 
 @app.post("/tag-transform")
 async def tag_and_transform(req: TagTransformRequest):
-    # dynamic_prompt = (
-    #     f"You are assisting with documenting key insights from a requirement gathering call. "
-    #     f"The user has selected the following excerpt from the transcript and tagged it as <{req.category}>. "
-    #     f"Your task is to extract the key point(s) conveyed in this selection and rewrite them in a clear, professional, third-person format — as if they are bullet points in structured meeting notes. "
-    #     f"Do not use dialogue or speaker names. Summarize only the essential information, and attach the starting and ending timestamps the timestamp {req.timestamp}. "
-    #     f"Keep the output concise and relevant to the <{req.category}> tag.\n\n"
-    #     f"Transcript Excerpt:\n{req.selected_text}"
-    # )
-
-    dynamic_prompt =  (
+    dynamic_prompt = (
     f"You are a note-taking assistant specialized in Salesforce requirement and demo calls.\n\n"
     f"Roles:\n"
     f"- AE (Account Executive): Manages client relationships, sets meeting agendas, gathers client requirements, and ensures sales progression.\n"
@@ -107,8 +98,8 @@ async def tag_and_transform(req: TagTransformRequest):
     f"  1) SE showed the demo\n"
     f"  2) Client raised questions\n"
     f"  3) SE mapped solution to client's raised question\n\n"
-    f"Context: The user selected a transcript excerpt and tagged it as <{req.category}>. "
-    f"Use the tag as a hint but determine the most accurate category from the list above. "
+    f"Context: The user selected a transcript excerpt without a pre-assigned tag. From now on, we will not be sending the tagging; you have to analyze what's in the text and then categorize by yourself.\n"
+    f"Determine the most accurate category from the list above based on your analysis. "
     f"If multiple categories apply, list them in the order they occur in the excerpt.\n\n"
     f"Instructions (apply exactly):\n"
     f"1) Choose the category or categories that best fit the excerpt.\n"
